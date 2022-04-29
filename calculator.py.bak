@@ -1,0 +1,127 @@
+from typing import Tuple
+import string
+
+
+def parse(chars: list) -> list:
+    chars_new = chars.copy()
+    chars_contain_equal, ind_equal = contain_equal(chars_new)
+    if chars_contain_equal:
+        if len(chars_new) == 2:
+            if ind_equal == 0:
+                chars_new.insert(1, '=')
+                chars_new[0] = chars_new[0][:-1]
+            else:
+                chars_new.insert(1, '=')
+                chars_new[2] = chars_new[2][1:]
+        elif len(chars_new) == 1:
+            chars_new = chars_new[0].split('=')
+            chars_new.insert(1, '=')
+    for ind, char in enumerate(chars_new):
+        if not char.isnumeric():
+            if char.startswith('+'):
+                chars_new[ind] = '+'
+            elif not char[-1].isnumeric() and char.startswith('-'):
+                chars_new[ind] = minus_count(char)
+    return chars_new
+
+
+def contain_equal(chars: list) -> Tuple[bool, int]:
+    contain_equal = False
+    ind_out = None
+    for ind, symbol in enumerate(chars):
+        if '=' in symbol:
+            ind_out = ind
+            contain_equal = True
+            break
+    return contain_equal, ind_out
+
+
+def chars_to_numbers(chars_new: list) -> list:
+    num_list = []
+    if chars_new[0][-1].isnumeric():
+        num_list.append(int(chars_new[0]))
+        chars_new.pop(0)
+    for ind, char in enumerate(chars_new[::2]):
+        if char == '+':
+            num_list.append(int(chars_new[2 * ind + 1]))
+        else:
+            num_list.append(-int(chars_new[2 * ind + 1]))
+    return num_list
+
+
+def minus_count(minus_string: str) -> str:
+    minus = minus_string.count('-')
+    if minus % 2 == 1:
+        return '-'
+    else:
+        return '+'
+
+
+def is_valid_identifier(variable: str) -> bool:
+    latin_letters = set(string.ascii_letters)
+    is_valid_identifier = True
+    for char in variable:
+        if char not in latin_letters:
+            is_valid_identifier = False
+            break
+    return is_valid_identifier
+
+
+def main():
+    variables = {}
+    while True:
+        try:
+            chars = input().split()
+            chars_parsed = parse(chars)
+            if len(chars_parsed) == 0:
+                pass
+            elif len(chars_parsed) == 1:
+                if chars_parsed[0][0] == '/':
+                    if chars_parsed[0] == '/exit':
+                        print('Bye!')
+                        break
+                    elif chars_parsed[0] == '/help':
+                        print(
+                            'The program calculates the sum or subtraction of numbers'
+                        )
+                    else:
+                        print('Unknown command')
+                else:
+                    if chars_parsed[0] in variables:
+                        print(variables[chars_parsed[0]])
+                    elif chars_parsed[0].isnumeric():
+                        print(int(chars_parsed[0]))
+                    else:
+                        print('Unknown variable')
+            else:
+                sums = 0
+                if '=' in chars_parsed:
+                    if not is_valid_identifier(chars_parsed[0]):
+                        print('Invalid identifier')
+                        continue
+                    elif len(chars_parsed) > 3:
+                        print('Invalid assignment')
+                        continue
+                    if not chars_parsed[2].isnumeric():
+                        if not is_valid_identifier(chars_parsed[2]):
+                            print('Invalid assignment')
+                        elif chars_parsed[2] not in variables:
+                            print('Unknown variable')
+                        else:
+                            variables[chars_parsed[0]] = variables[
+                                chars_parsed[2]]
+                    else:
+                        variables[chars_parsed[0]] = chars_parsed[2]
+                else:
+                    for ind, symbol in enumerate(chars_parsed):
+                        if symbol in variables:
+                            chars_parsed[ind] = variables[symbol]
+                    for num in chars_to_numbers(parse(chars_parsed)):
+                        sums += int(num)
+                    print(sums)
+        except ValueError:
+            print('Invalid expression')
+
+
+if __name__ == '__main__':
+    main()
